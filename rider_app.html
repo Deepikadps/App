@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Fix Rider</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#1a56db;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.box{background:#fff;border-radius:20px;padding:32px 24px;width:90%;max-width:340px}
+h2{text-align:center;color:#1e293b;margin:0 0 24px;font-size:20px}
+label{display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px}
+input{width:100%;padding:13px;border:2px solid #e2e8f0;border-radius:10px;font-size:16px;margin-bottom:16px;box-sizing:border-box;outline:none}
+input:focus{border-color:#1a56db}
+button{width:100%;padding:14px;background:#1a56db;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer}
+#msg{margin-top:12px;padding:10px;border-radius:8px;text-align:center;font-size:14px;display:none}
+.err{background:#fff1f2;color:#be123c}
+.ok{background:#f0fdf4;color:#166534}
+
+/* APP */
+#APP{display:none;background:#f1f5f9;min-height:100vh}
+.hdr{background:#1a56db;color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center}
+.hdr h1{font-size:16px;font-weight:700;margin:0}
+#rname{font-size:12px;opacity:.8;margin-top:2px}
+.out-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:7px 12px;border-radius:8px;font-size:13px;cursor:pointer}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #e2e8f0}
+.tab{flex:1;padding:12px 4px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;color:#64748b;border-bottom:3px solid transparent}
+.tab.on{color:#1a56db;border-bottom-color:#1a56db}
+.pg{padding:12px;display:none}
+.pg.on{display:block}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px}
+.st{background:#fff;border-radius:10px;padding:8px;text-align:center;border:1px solid #e2e8f0}
+.st b{display:block;font-size:18px;font-weight:700}
+.st small{font-size:10px;color:#64748b}
+.card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:10px;overflow:hidden}
+.ctop{padding:12px 14px 0}
+.ccon{font-size:14px;font-weight:700;color:#1e293b}
+.cname{font-size:13px;color:#475569;margin-top:2px}
+.caddr{font-size:12px;color:#64748b;margin:6px 0}
+.cpay{display:flex;justify-content:space-between;align-items:center;padding-bottom:10px}
+.badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:8px}
+.cod{background:#fff7ed;color:#c2410c}
+.onl{background:#f0fdf4;color:#16a34a}
+.cbtns{display:flex;gap:6px}
+.ibtn{padding:6px 10px;border-radius:8px;border:none;cursor:pointer;font-size:13px}
+.acts{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid #f1f5f9}
+.act{padding:11px;border:none;cursor:pointer;font-size:12px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px}
+.ad{background:#16a34a;color:#fff}
+.ah{background:#f59e0b;color:#fff}
+.ar{background:#ef4444;color:#fff}
+.dc{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:12px 14px;margin-bottom:8px}
+.bdg{font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px}
+.bd{background:#f0fdf4;color:#166534}
+.bh{background:#fffbeb;color:#92400e}
+.br{background:#fff1f2;color:#be123c}
+.empty{text-align:center;padding:40px;color:#94a3b8;font-size:14px}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;display:none;align-items:flex-end;justify-content:center}
+.ov.on{display:flex}
+.mod{background:#fff;border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.mbar{width:36px;height:4px;background:#cbd5e1;border-radius:2px;margin:0 auto 16px}
+.mtit{font-size:17px;font-weight:700;color:#1e293b;margin-bottom:4px}
+.msub{font-size:13px;color:#64748b;margin-bottom:14px}
+.ri{padding:13px 16px;border:2px solid #e2e8f0;border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:14px}
+.ri.sel{border-color:#1a56db;background:#eff6ff;color:#1d4ed8;font-weight:700}
+.cbtn{width:100%;padding:13px;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:700;margin-top:8px}
+.xbtn{width:100%;padding:11px;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:14px;color:#64748b;background:#fff;margin-top:6px}
+.irow{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f8fafc;align-items:flex-start}
+.iico{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ilbl{font-size:11px;color:#64748b}
+.ival{font-size:14px;font-weight:600;color:#1e293b;margin-top:1px}
+.mbr{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.mb{padding:12px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700}
+.mc{background:#eff6ff;color:#1d4ed8}
+.mw{background:#dcfce7;color:#15803d}
+.a3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+.a3 button{padding:12px 4px;border:none;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1}
+
+.route-hdr{background:#1a56db;color:#fff;border-radius:14px;padding:14px;margin-bottom:12px}
+.stop{display:flex}
+.sl{display:flex;flex-direction:column;align-items:center;width:26px;flex-shrink:0}
+.sd{width:13px;height:13px;border-radius:50%;border:3px solid #1a56db;background:#fff;margin-top:15px;flex-shrink:0}
+.sd.f{background:#1a56db}
+.sd.l{background:#16a34a;border-color:#16a34a}
+.sv{flex:1;width:2px;background:#bfdbfe;min-height:8px}
+.sc{flex:1;background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:10px 12px;margin:5px 0 5px 8px}
+.si{font-size:12px;color:#475569;background:#f8fafc;padding:4px 8px;border-radius:6px;display:flex;justify-content:space-between;margin-top:4px}
+.pdfb{width:100%;padding:13px;background:#1a56db;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px}
+.rpt-box{background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:10px}
+.rpt-hdr2{padding:9px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase}
+.rrow{padding:10px 14px;border-bottom:1px solid #f8fafc;display:flex;justify-content:space-between;align-items:flex-start}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="LOGIN">
+  <div class="box">
+    <h2>🚴 Smart Fix Rider</h2>
+    <label>Rider ID</label>
+    <input type="text" id="I" placeholder="R001" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <label>PIN</label>
+    <input type="password" id="P" placeholder="1111" inputmode="numeric" onkeydown="if(event.key==='Enter')signin()">
+    <button onclick="signin()">Sign In →</button>
+    <div id="msg"></div>
+  </div>
+</div>
+
+<!-- MAIN APP PAGE -->
+<div id="APP">
+  <div class="hdr">
+    <div><h1>Smart Fix Delivery</h1><div id="rname"></div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="pcnt" style="background:rgba(255,255,255,.25);border-radius:20px;padding:3px 12px;color:#fff;font-size:13px;font-weight:700">0</span>
+      <button class="out-btn" onclick="signout()">Logout</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab on" onclick="goTab(this,'pg-p')">📦 Pending</div>
+    <div class="tab" onclick="goTab(this,'pg-h')">⏸ Hold</div>
+    <div class="tab" onclick="goTab(this,'pg-r')">🗺 Route</div>
+    <div class="tab" onclick="goTab(this,'pg-d')">✅ Done</div>
+    <div class="tab" onclick="goTab(this,'pg-rt')">↩ Return</div>
+    <div class="tab" onclick="goTab(this,'pg-rp')">📄 Report</div>
+  </div>
+  <div id="pg-p" class="pg on">
+    <div class="stats">
+      <div class="st"><b id="sp">0</b><small>Pending</small></div>
+      <div class="st"><b id="sh" style="color:#d97706">0</b><small>Hold</small></div>
+      <div class="st"><b id="sc" style="color:#c2410c">0</b><small>COD</small></div>
+      <div class="st"><b id="so" style="color:#16a34a">0</b><small>Online</small></div>
+    </div>
+    <div id="pl"></div>
+  </div>
+  <div id="pg-h" class="pg"><p id="hl" style="padding:10px 2px;font-size:13px;color:#64748b">0 on hold</p><div id="hl2"></div></div>
+  <div id="pg-r" class="pg"><div id="rl"></div></div>
+  <div id="pg-d" class="pg"><p id="dl" style="padding:10px 2px;font-size:13px;color:#64748b">0 delivered</p><div id="dl2"></div></div>
+  <div id="pg-rt" class="pg"><p id="rtl" style="padding:10px 2px;font-size:13px;color:#64748b">0 returns</p><div id="rtl2"></div></div>
+  <div id="pg-rp" class="pg">
+    <p style="font-size:17px;font-weight:700;color:#1e293b;margin-bottom:4px">End of Day Report</p>
+    <p id="rdate" style="font-size:12px;color:#64748b;margin-bottom:10px"></p>
+    <div class="stats" style="grid-template-columns:1fr 1fr">
+      <div class="st"><b id="rd" style="color:#16a34a">0</b><small>Delivered</small></div>
+      <div class="st"><b id="rr" style="color:#be123c">0</b><small>Returns</small></div>
+      <div class="st"><b id="rh" style="color:#d97706">0</b><small>Hold</small></div>
+      <div class="st"><b id="rc" style="font-size:12px;color:#c2410c">AED 0</b><small>COD</small></div>
+    </div>
+    <div class="rpt-box"><div class="rpt-hdr2">All Shipments</div><div id="rpt"></div></div>
+    <button class="pdfb" onclick="makePDF()">⬇ Download PDF</button>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="ov" id="ov1" onclick="if(event.target===this)closeOv('ov1')">
+  <div class="mod"><div class="mbar"></div><div id="ob"></div></div>
+</div>
+
+<!-- REASON MODAL -->
+<div class="ov" id="ov2" onclick="if(event.target===this)closeOv('ov2')">
+  <div class="mod"><div class="mbar"></div><div id="rb"></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec';
+
+var USERS = {
+  'R001': {id:'R001', name:'Rider Ahmed', pin:'1111', role:'rider'},
+  'R002': {id:'R002', name:'Rider Sara',  pin:'2222', role:'rider'},
+  'admin':{id:'admin', name:'Admin',      pin:'1234', role:'admin'}
+};
+
+var RR = ['Customer not available','Customer refused delivery','Wrong address','Damaged item','Customer requested return','Other'];
+var HR = ['Customer asked for tomorrow','Customer not home – will call back','Address needs confirmation','Payment issue – will resolve','Other'];
+
+var me = null, selS = null, selAct = null, selR = null;
+var D = {p:[], h:[], d:[], r:[]};
+
+function g(id){ return document.getElementById(id); }
+function sv(id,v){ var e=g(id); if(e) e.textContent=v; }
+
+function showMsg(txt, type) {
+  var m = g('msg');
+  m.textContent = txt;
+  m.className = type;
+  m.style.display = 'block';
+}
+
+function toast(m) {
+  var t = g('toast');
+  t.textContent = m;
+  t.classList.add('on');
+  setTimeout(function(){ t.classList.remove('on'); }, 2400);
+}
+
+function signin() {
+  var id  = g('I').value.trim();
+  var pin = g('P').value.trim();
+  if (!id || !pin) { showMsg('Please enter Rider ID and PIN', 'err'); return; }
+
+  // Demo check
+  if (USERS[id] && USERS[id].pin === pin) {
+    me = USERS[id];
+    launch();
+    return;
+  }
+
+  // API check
+  if (API !== 'https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec') {
+    fetch(API + '?action=login', {
+      method:'POST',
+      body: JSON.stringify({action:'login', riderId:id, pin:pin}),
+      headers:{'Content-Type':'application/json'}
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (res && res.success) { me = res.rider; launch(); }
+      else showMsg('Invalid ID or PIN', 'err');
+    })
+    .catch(function(){ showMsg('Invalid ID or PIN', 'err'); });
+    return;
+  }
+
+  showMsg('Wrong ID or PIN. Demo: R001 / 1111', 'err');
+}
+
+function signout() {
+  try { localStorage.removeItem('sfRider'); } catch(e){}
+  me = null; D = {p:[],h:[],d:[],r:[]};
+  g('APP').style.display = 'none';
+  g('LOGIN').style.display = 'flex';
+  g('I').value = ''; g('P').value = '';
+  g('msg').style.display = 'none';
+}
+
+function launch() {
+  // Save session to localStorage so rider stays logged in
+  try { localStorage.setItem('sfRider', JSON.stringify(me)); } catch(e){}
+  g('LOGIN').style.display = 'none';
+  g('APP').style.display = 'block';
+  sv('rname', 'Hi, ' + me.name);
+  loadData();
+}
+
+// Check saved session on page load
+function checkSession() {
+  try {
+    var saved = localStorage.getItem('sfRider');
+    if (saved) {
+      me = JSON.parse(saved);
+      g('LOGIN').style.display = 'none';
+      g('APP').style.display = 'block';
+      sv('rname', 'Hi, ' + me.name);
+      loadData();
+      return true;
+    }
+  } catch(e){}
+  return false;
+}
+
+function loadData() {
+  if (API !== 'https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec') {
+    fetch(API + '?action=getShipments', {
+      method:'POST',
+      body: JSON.stringify({action:'getShipments', riderId:me.id}),
+      headers:{'Content-Type':'application/json'}
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (res && res.shipments) parseRaw(res.shipments);
+      else demo();
+    })
+    .catch(function(){ demo(); });
+    return;
+  }
+  demo();
+}
+
+function demo() {
+  var all = [
+    {con:'DC06-130',company:'OSBUY',customer:'Ahmed Al Rashid',phone:'0501234567',address:'DXB-BARSHA, Villa 12',area:'DXB-BARSHA',amount:69,courier:11,balance:58,payment:'COD',status:'Pending',returnReason:'',holdReason:''},
+    {con:'WD06-198',company:'OSBUY',customer:'Sara Mohammed',phone:'0559876543',address:'DXB-AL QUOZ, Shop 4',area:'DXB-AL QUOZ',amount:49,courier:11,balance:38,payment:'Online',status:'Pending',returnReason:'',holdReason:''},
+    {con:'BM06-259',company:'OSBUY',customer:'Khalid Ibrahim',phone:'0521122334',address:'DXB-BARSHA, Apt 301',area:'DXB-BARSHA',amount:49,courier:11,balance:38,payment:'COD',status:'Pending',returnReason:'',holdReason:''},
+    {con:'PR-0028',company:'Perfume',customer:'James Wilson',phone:'0504455667',address:'DXB, Downtown Dubai',area:'DXB',amount:100,courier:20,balance:80,payment:'COD',status:'Pending',returnReason:'',holdReason:''},
+    {con:'RW-5472',company:'RW',customer:'Omar Farooq',phone:'0527788990',address:'Sharjah, Al Nahda',area:'SHJ',amount:120,courier:20,balance:100,payment:'Online',status:'Pending',returnReason:'',holdReason:''}
+  ];
+  D.p = me.id==='R002' ? all.slice(2) : me.role==='admin' ? all : all.slice(0,3);
+  D.h=[]; D.d=[]; D.r=[];
+  draw();
+}
+
+function parseRaw(raw) {
+  D={p:[],h:[],d:[],r:[]};
+  raw.forEach(function(x){
+    var m={con:x['Con.No']||'',company:x['Company']||'',customer:x['Customer Name']||'',phone:x['Phone']||'',
+      address:x['Address']||'',area:x['Location']||'',amount:+x['Prod.Amount']||0,courier:+x['Courier']||0,
+      balance:+x['Balance']||0,payment:x['Payment Type']||'COD',status:x['Status']||'Pending',
+      returnReason:x['Return Reason']||'',holdReason:x['Hold Reason']||''};
+    var s=m.status.toLowerCase();
+    if(s==='delivered')D.d.push(m); else if(s==='return')D.r.push(m); else if(s==='hold')D.h.push(m); else D.p.push(m);
+  });
+  draw();
+}
+
+function draw() {
+  sv('pcnt', D.p.length); sv('sp', D.p.length); sv('sh', D.h.length);
+  sv('sc', D.p.filter(function(x){return x.payment==='COD';}).length);
+  sv('so', D.p.filter(function(x){return x.payment==='Online';}).length);
+  sv('hl', D.h.length+' on hold'); sv('dl', D.d.length+' delivered'); sv('rtl', D.r.length+' returns');
+  drawP(); drawH(); drawD(); drawR(); drawRoute(); drawReport();
+}
+
+function grp(list) {
+  var g={}; list.forEach(function(x){ if(!g[x.area])g[x.area]=[]; g[x.area].push(x); }); return g;
+}
+
+function drawP() {
+  var areas=grp(D.p), keys=Object.keys(areas);
+  if(!keys.length){g('pl').innerHTML='<div class="empty">🎉 All done!</div>';return;}
+  var h='';
+  keys.forEach(function(a){
+    h+='<div style="padding:6px 2px 3px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">📍 '+a+' ('+areas[a].length+')</div>';
+    areas[a].forEach(function(x){ h+=cardHTML(x); });
+  });
+  g('pl').innerHTML=h;
+}
+
+function cardHTML(x) {
+  return '<div class="card" draggable="true" id="card-'+x.con+'" ondragstart="onDS(event,\''+x.con+'\')" ondragover="onDO(event)" ondrop="onDP(event,\''+x.con+'\')" style="cursor:grab">'+ 
+    '<div class="ctop" onclick="openDetail(\''+x.con+'\')">'+
+      '<div class="ccon">📦 '+x.con+'</div>'+
+      '<div class="cname">'+x.customer+'</div>'+
+      '<div class="caddr">📍 '+x.address+'</div>'+
+      '<div class="cpay">'+
+        '<span class="badge '+(x.payment==='COD'?'cod':'onl')+'">'+(x.payment==='COD'?'💰 COD: AED '+x.balance:'✅ Online Paid')+'</span>'+
+        '<div class="cbtns" onclick="event.stopPropagation()">'+
+          '<button class="ibtn" style="background:#eff6ff" onclick="doCall(\''+x.phone+'\')">📞</button>'+
+          '<button class="ibtn" style="background:#dcfce7" onclick="doWA(\''+x.phone+'\',\''+x.con+'\',\''+x.customer+'\',\''+x.area+'\',\''+x.payment+'\','+x.balance+')">💬</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="acts">'+
+      '<button class="act ad" onclick="doAct(\''+x.con+'\',\'d\')"><span>✅</span>Delivered</button>'+
+      '<button class="act ah" onclick="openReason(\''+x.con+'\',\'h\',0)"><span>⏸</span>Hold</button>'+
+      '<button class="act ar" onclick="openReason(\''+x.con+'\',\'r\',0)"><span>↩</span>Return</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function drawH() {
+  if(!D.h.length){g('hl2').innerHTML='<div class="empty">⏸ No items on hold</div>';return;}
+  g('hl2').innerHTML=D.h.map(function(x){
+    return '<div class="dc">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'+
+        '<span style="font-size:14px;font-weight:700;color:#1e293b">'+x.con+'</span>'+
+        '<span class="bdg bh">⏸ Hold</span>'+
+      '</div>'+
+      '<div style="font-size:13px;color:#475569">'+x.customer+' · '+x.area+'</div>'+
+      '<div style="font-size:12px;color:#92400e;margin-top:3px">'+x.holdReason+'</div>'+
+      '<div style="display:flex;gap:8px;margin-top:8px">'+
+        '<button onclick="doActHold(\''+x.con+'\',\'d\')" style="flex:1;padding:9px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">✅ Deliver</button>'+
+        '<button onclick="openReason(\''+x.con+'\',\'r\',1)" style="flex:1;padding:9px;background:#fee2e2;color:#be123c;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">↩ Return</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function drawD() {
+  if(!D.d.length){g('dl2').innerHTML='<div class="empty">✅ No deliveries yet</div>';return;}
+  g('dl2').innerHTML=D.d.map(function(x){return '<div class="dc"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:14px;font-weight:700;color:#1e293b">'+x.con+'</span><span class="bdg bd">✅ Delivered</span></div><div style="font-size:13px;color:#475569">'+x.customer+' · '+x.area+'</div></div>';}).join('');
+}
+
+function drawR() {
+  if(!D.r.length){g('rtl2').innerHTML='<div class="empty">↩ No returns yet</div>';return;}
+  g('rtl2').innerHTML=D.r.map(function(x){return '<div class="dc"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:14px;font-weight:700;color:#1e293b">'+x.con+'</span><span class="bdg br">↩ Return</span></div><div style="font-size:13px;color:#475569">'+x.customer+'</div><div style="font-size:12px;color:#be123c;margin-top:3px">'+x.returnReason+'</div></div>';}).join('');
+}
+
+function drawRoute() {
+  var areas=grp(D.p), keys=Object.keys(areas);
+  if(!keys.length){g('rl').innerHTML='<div class="empty">No pending stops</div>';return;}
+  var h='<div class="route-hdr"><div style="font-size:15px;font-weight:700">🗺 Today\'s Route</div><div style="font-size:12px;opacity:.8;margin-top:3px">'+keys.length+' area'+( keys.length>1?'s':'')+' to visit</div></div>';
+  keys.forEach(function(a,i){
+    var items=areas[a],isF=i===0,isL=i===keys.length-1;
+    h+='<div class="stop"><div class="sl">'+(i>0?'<div class="sv"></div>':'<div style="height:15px"></div>')+'<div class="sd'+(isF?' f':isL?' l':'')+'"></div>'+(!isL?'<div class="sv" style="flex:1;min-height:36px"></div>':'')+'</div>'+
+      '<div class="sc"><div style="font-size:14px;font-weight:700;color:#1e293b">'+a+'</div><div style="font-size:12px;color:#64748b">'+items.length+' shipment'+(items.length>1?'s':'')+' · Stop '+(i+1)+' of '+keys.length+'</div>'+
+      items.map(function(x){return '<div class="si"><span>'+x.con+' — '+x.customer.split(' ')[0]+'</span><span style="font-weight:700;color:'+(x.payment==='COD'?'#c2410c':'#16a34a')+'">'+(x.payment==='COD'?'AED '+x.balance:'Online')+'</span></div>';}).join('')+'</div></div>';
+  });
+  g('rl').innerHTML=h;
+}
+
+function drawReport() {
+  sv('rdate', new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}));
+  sv('rd',D.d.length); sv('rr',D.r.length); sv('rh',D.h.length);
+  var cod=D.d.filter(function(x){return x.payment==='COD';}).reduce(function(a,x){return a+x.balance;},0);
+  sv('rc','AED '+cod);
+  var all=D.d.concat(D.r).concat(D.h).concat(D.p);
+  g('rpt').innerHTML=all.length?all.map(function(x){
+    var sc=x.status==='Delivered'?'#166534':x.status==='Return'?'#be123c':x.status==='Hold'?'#92400e':'#475569';
+    var sb=x.status==='Delivered'?'#f0fdf4':x.status==='Return'?'#fff1f2':x.status==='Hold'?'#fffbeb':'#f1f5f9';
+    return '<div class="rrow"><div><div style="font-size:13px;font-weight:700;color:#1e293b">'+x.con+'</div><div style="font-size:12px;color:#64748b">'+x.customer+' · '+x.area+'</div>'+(x.returnReason?'<div style="font-size:11px;color:#be123c">'+x.returnReason+'</div>':'')+(x.holdReason?'<div style="font-size:11px;color:#92400e">'+x.holdReason+'</div>':'')+'</div><div style="text-align:right"><span style="font-size:11px;padding:2px 8px;border-radius:8px;background:'+sb+';color:'+sc+'">'+x.status+'</span><div style="font-size:11px;color:#94a3b8;margin-top:3px">'+(x.payment==='COD'?'COD AED '+x.balance:'Online')+'</div></div></div>';
+  }).join(''):'<div style="padding:16px;text-align:center;font-size:13px;color:#94a3b8">No data yet</div>';
+}
+
+function goTab(el, pgId) {
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  el.classList.add('on');
+  g(pgId).classList.add('on');
+}
+
+function openDetail(con) {
+  var x=D.p.find(function(s){return s.con===con;}); if(!x)return; selS=x;
+  g('ob').innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'+
+      '<div><div class="mtit">'+x.customer+'</div><div class="msub">'+x.con+' · '+x.company+'</div></div>'+
+      '<button onclick="closeOv(\'ov1\')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:24px;line-height:1">×</button>'+
+    '</div>'+
+    '<div class="irow"><div class="iico" style="background:#eff6ff">📍</div><div><div class="ilbl">Address</div><div class="ival">'+x.address+'</div></div></div>'+
+    '<div class="irow"><div class="iico" style="background:#fdf4ff">📞</div><div><div class="ilbl">Phone</div><div class="ival">'+x.phone+'</div></div></div>'+
+    '<div class="irow"><div class="iico" style="background:'+(x.payment==='COD'?'#fff7ed':'#f0fdf4')+'">'+(x.payment==='COD'?'💰':'✅')+'</div><div><div class="ilbl">Payment</div><div class="ival">'+(x.payment==='COD'?'Cash on Delivery — AED '+x.balance:'Online Paid ✓')+'</div></div></div>'+
+    '<div class="irow"><div class="iico" style="background:#f8fafc">🧾</div><div><div class="ilbl">Product / Courier</div><div class="ival">AED '+x.amount+' / AED '+x.courier+'</div></div></div>'+
+    '<div class="mbr"><button class="mb mc" onclick="doCall(\''+x.phone+'\')">📞 Call</button><button class="mb mw" onclick="doWA(\''+x.phone+'\',\''+x.con+'\',\''+x.customer+'\',\''+x.area+'\',\''+x.payment+'\','+x.balance+')">💬 WhatsApp</button></div>'+
+    '<div class="a3">'+
+      '<button onclick="doAct(\''+x.con+'\',\'d\');closeOv(\'ov1\')" style="background:#16a34a;color:#fff">✅<br>Delivered</button>'+
+      '<button onclick="closeOv(\'ov1\');openReason(\''+x.con+'\',\'h\',0)" style="background:#f59e0b;color:#fff">⏸<br>Hold</button>'+
+      '<button onclick="closeOv(\'ov1\');openReason(\''+x.con+'\',\'r\',0)" style="background:#ef4444;color:#fff">↩<br>Return</button>'+
+    '</div>';
+  g('ov1').classList.add('on');
+}
+
+function openReason(con, type, fromHold) {
+  var pool = fromHold ? D.h : D.p;
+  var x = pool.find(function(s){return s.con===con;}); if(!x)return;
+  selS=x; selAct=type; selR=null;
+  var reasons = type==='r' ? RR : HR;
+  var title = type==='r' ? '↩ Return Shipment' : '⏸ Hold Shipment';
+  var bg = type==='r' ? '#ef4444' : '#f59e0b';
+  var bt = type==='r' ? 'Confirm Return' : 'Confirm Hold';
+  g('rb').innerHTML=
+    '<div class="mtit">'+title+'</div>'+
+    '<div class="msub">'+x.con+' · '+x.customer+'</div>'+
+    '<div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Select Reason</div>'+
+    '<div id="rlist">'+reasons.map(function(r,i){return '<div class="ri" onclick="pickR(this,'+i+')">'+r+'</div>';}).join('')+'</div>'+
+    '<button class="cbtn" style="background:'+bg+';color:#fff" onclick="confirmR('+fromHold+')">'+bt+'</button>'+
+    '<button class="xbtn" onclick="closeOv(\'ov2\')">Cancel</button>';
+  g('ov2').classList.add('on');
+}
+
+function pickR(el, i) {
+  document.querySelectorAll('#rlist .ri').forEach(function(x){x.classList.remove('sel');});
+  el.classList.add('sel');
+  selR = i;
+}
+
+function confirmR(fromHold) {
+  if (selR===null) {toast('Please select a reason'); return;}
+  var reasons = selAct==='r' ? RR : HR;
+  var reason = reasons[selR];
+  closeOv('ov2');
+  if (fromHold) doActHold(selS.con, selAct, reason);
+  else doAct(selS.con, selAct, reason);
+}
+
+function onDS(e, con) { e.dataTransfer.setData('text', con); }
+function onDO(e) { e.preventDefault(); }
+function onDP(e, targetCon) {
+  e.preventDefault();
+  var srcCon = e.dataTransfer.getData('text');
+  if (srcCon === targetCon) return;
+  var si = D.p.findIndex(function(x){ return x.con === srcCon; });
+  var ti = D.p.findIndex(function(x){ return x.con === targetCon; });
+  if (si === -1 || ti === -1) return;
+  var item = D.p.splice(si, 1)[0];
+  D.p.splice(ti, 0, item);
+  drawP();
+}
+
+function doAct(con, type, reason) {
+  var x=D.p.find(function(s){return s.con===con;}); if(!x)return;
+  D.p=D.p.filter(function(s){return s.con!==con;});
+  if(type==='d'){x.status='Delivered';D.d.push(x);toast('✅ Delivered: '+con);}
+  else if(type==='h'){x.status='Hold';x.holdReason=reason||'';D.h.push(x);toast('⏸ On Hold: '+con);}
+  else{x.status='Return';x.returnReason=reason||'';D.r.push(x);toast('↩ Return: '+con);}
+  sync(x); draw();
+}
+
+function doActHold(con, type, reason) {
+  var x=D.h.find(function(s){return s.con===con;}); if(!x)return;
+  D.h=D.h.filter(function(s){return s.con!==con;});
+  if(type==='d'){x.status='Delivered';D.d.push(x);toast('✅ Delivered: '+con);}
+  else{x.status='Return';x.returnReason=reason||'';D.r.push(x);toast('↩ Return: '+con);}
+  sync(x); draw();
+}
+
+function closeOv(id){g(id).classList.remove('on');}
+function doCall(p){window.location.href='tel:'+p;}
+function doWA(p,con,name,area,payment,balance) {
+  var n = p.startsWith('0') ? '+971' + p.slice(1) : p;
+  var payText = payment === 'COD' ? 'Cash on Delivery - AED ' + balance : 'Online (Already Paid)';
+  var msg = 'Hi, I am from Smart Fix Courier.\n' +
+            'I have a delivery for you.\n\n' +
+            '📦 Tracking No: ' + con + '\n' +
+            '📍 Area: ' + area + '\n' +
+            '💳 Payment: ' + payText + '\n\n' +
+            'Please be available to receive your order. Thank you!';
+  window.open('https://wa.me/' + n + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function sync(x) {
+  if(API==='https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec')return;
+  fetch(API+'?action=updateStatus',{method:'POST',body:JSON.stringify({action:'updateStatus',conNo:x.con,status:x.status,returnReason:x.returnReason||'',holdReason:x.holdReason||''}),headers:{'Content-Type':'application/json'}}).catch(function(){});
+}
+
+function makePDF() {
+  if(!window.jspdf){toast('Loading PDF...');return;}
+  var doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  var pw=doc.internal.pageSize.getWidth();
+  var today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  doc.setFillColor(26,86,219);doc.rect(0,0,pw,30,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text('Smart Fix Delivery',14,13);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Rider: '+(me?me.name:''),14,21);doc.text(today,pw-14,21,{align:'right'});
+  var cod=D.d.filter(function(x){return x.payment==='COD';}).reduce(function(a,x){return a+x.balance;},0);
+  var all=D.d.concat(D.r).concat(D.h).concat(D.p);
+  doc.autoTable({startY:36,head:[['Summary','']],body:[['Total',all.length],['Delivered',D.d.length],['Returns',D.r.length],['Hold',D.h.length],['Pending',D.p.length],['COD','AED '+cod]],styles:{fontSize:9,cellPadding:3},headStyles:{fillColor:[26,86,219],textColor:255},theme:'grid',margin:{left:14},tableWidth:100});
+  var y=doc.lastAutoTable.finalY+10;
+  doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);doc.text('Shipments',14,y);
+  doc.autoTable({startY:y+4,head:[['Con.No','Company','Customer','Area','Payment','Status','Reason']],body:all.map(function(x){return[x.con,x.company,x.customer,x.area,x.payment==='COD'?'COD AED '+x.balance:'Online',x.status,x.returnReason||x.holdReason||'-'];}),styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[26,86,219],textColor:255},alternateRowStyles:{fillColor:[248,250,255]},columnStyles:{0:{cellWidth:22},1:{cellWidth:18},2:{cellWidth:32},3:{cellWidth:20},4:{cellWidth:22},5:{cellWidth:18},6:{cellWidth:28}},margin:{left:14}});
+  doc.save('SmartFix_'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('✅ PDF saved!');
+}
+// Check for saved session on load
+checkSession();
+</script>
+</body>
+</html>
