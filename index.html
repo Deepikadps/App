@@ -319,14 +319,20 @@ function startDash() {
 // ── LOAD DATA ──
 function loadAll() {
   api('getRiders', {}, function(res) {
-    if (res && res.riders) allRiders = res.riders;
-    else loadDemoRiders();
+    if (res && res.riders) {
+      allRiders = res.riders;
+    } else {
+      allRiders = [];
+    }
     populateRiderDropdowns();
     renderRiders();
   });
   api('getAllShipments', {}, function(res) {
-    if (res && res.shipments) allShipments = res.shipments.map(mapRow);
-    else loadDemoShipments();
+    if (res && res.shipments) {
+      allShipments = res.shipments.map(mapRow);
+    } else {
+      allShipments = [];
+    }
     renderAll();
   });
 }
@@ -480,11 +486,10 @@ function doAssign() {
     if (s) s.riderId = riderId;
   });
 
-  // Sync to sheet
   api('assignRider', {conNos:checked, riderId:riderId}, function(res){
     toast('✅ Assigned '+checked.length+' shipment(s) to '+rName(riderId));
+    setTimeout(function(){ loadAll(); }, 1000);
   });
-  renderAll();
 }
 
 function renderReport() {
@@ -508,27 +513,22 @@ function saveRider() {
   var name=g('r-name').value.trim(), phone=g('r-phone').value.trim(), pin=g('r-pin').value.trim();
   if (!name||!pin) { toast('Name and PIN are required'); return; }
   api('addRider', {name:name,phone:phone,pin:pin}, function(res) {
-    var id = res&&res.riderId ? res.riderId : 'R'+Date.now().toString().slice(-6);
-    allRiders.push({id:id,name:name,phone:phone,role:'rider'});
-    toast('✅ Rider added! ID: '+id);
-    closeOv('ov-rider');
-    renderRiders(); renderAssign(); populateRiderDropdowns();
+    if (res && res.riderId) {
+      toast('✅ Rider added! ID: '+res.riderId+' PIN: '+pin);
+      closeOv('ov-rider');
+      setTimeout(function(){ loadAll(); }, 1000);
+    } else {
+      toast('Error saving rider. Try again.');
+    }
   });
-  if (API==='https://script.google.com/macros/s/AKfycbwN2YOLLu39LxuPg76Jf95KFJYrM3Rbl23xfK3RGjZ2iT7xiocha6mOMDWWgB2u9mC3hA/exec') {
-    var id='R'+Date.now().toString().slice(-6);
-    allRiders.push({id:id,name:name,phone:phone,role:'rider'});
-    toast('✅ Rider added! ID: '+id+' (Demo)');
-    closeOv('ov-rider');
-    renderRiders(); renderAssign(); populateRiderDropdowns();
-  }
 }
 
 function delRider(id) {
   if (!confirm('Remove this rider? Their shipments will become unassigned.')) return;
-  allRiders = allRiders.filter(function(r){return r.id!==id;});
-  allShipments.forEach(function(s){if(s.riderId===id)s.riderId='';});
-  api('deleteRider', {riderId:id}, function(){});
-  toast('Rider removed'); renderAll(); populateRiderDropdowns();
+  api('deleteRider', {riderId:id}, function(res){
+    toast('Rider removed');
+    setTimeout(function(){ loadAll(); }, 1000);
+  });
 }
 
 function viewRider(id) {
@@ -549,10 +549,15 @@ function saveShipment() {
     riderId:g('f-rid').value, date:new Date().toLocaleDateString()
   };
   if (!body.conNo||!body.customer) { toast('Con.No and Customer are required'); return; }
-  api('addShipment', body, function(){});
-  allShipments.push(Object.assign({},body,{area:body.location,status:'Pending',returnReason:'',holdReason:'',updatedAt:''}));
-  toast('✅ Shipment added');
-  closeOv('ov-ship'); renderAll();
+  api('addShipment', body, function(res){
+    if(res && res.success) {
+      toast('✅ Shipment added');
+      closeOv('ov-ship');
+      setTimeout(function(){ loadAll(); }, 1000);
+    } else {
+      toast('Error adding shipment');
+    }
+  });
 }
 
 function populateRiderDropdowns() {
