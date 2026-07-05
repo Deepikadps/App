@@ -254,7 +254,7 @@ tr:hover td{background:#fafbfc}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
-var API = 'https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec';
+var API = 'https://script.google.com/macros/s/AKfycbwN2YOLLu39LxuPg76Jf95KFJYrM3Rbl23xfK3RGjZ2iT7xiocha6mOMDWWgB2u9mC3hA/exec';
 var allShipments = [], allRiders = [], sFilter = 'all', me = null;
 
 function g(id){ return document.getElementById(id); }
@@ -263,15 +263,15 @@ function toast(m){ var t=g('toast'); t.textContent=m; t.classList.add('on'); set
 
 // ── API CALL ──
 function api(action, data, cb) {
-  if (API === 'https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec') { cb && cb(null); return; }
-  fetch(API + '?action=' + action, {
-    method:'POST',
-    body: JSON.stringify(Object.assign({action:action}, data)),
-    headers:{'Content-Type':'application/json'}
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(res){ cb && cb(res); })
-  .catch(function(){ cb && cb(null); });
+  var p = Object.assign({action:action}, data||{});
+  var qs = Object.keys(p).map(function(k){
+    var v = typeof p[k]==='object' ? JSON.stringify(p[k]) : p[k];
+    return encodeURIComponent(k)+'='+encodeURIComponent(v);
+  }).join('&');
+  fetch(API+'?'+qs, {method:'GET',redirect:'follow'})
+  .then(function(r){return r.json();})
+  .then(function(res){cb&&cb(res);})
+  .catch(function(){cb&&cb(null);});
 }
 
 // ── LOGIN ──
@@ -281,7 +281,7 @@ function aLogin() {
   if (!id || !pin) { showErr('Enter ID and PIN'); return; }
 
   // Demo mode
-  if (API === 'https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec') {
+  if (API === 'https://script.google.com/macros/s/AKfycbwN2YOLLu39LxuPg76Jf95KFJYrM3Rbl23xfK3RGjZ2iT7xiocha6mOMDWWgB2u9mC3hA/exec') {
     if (id === 'admin' && pin === '1234') { me = {id:'admin',name:'Admin',role:'admin'}; startDash(); }
     else showErr('Demo: admin / 1234');
     return;
@@ -514,7 +514,7 @@ function saveRider() {
     closeOv('ov-rider');
     renderRiders(); renderAssign(); populateRiderDropdowns();
   });
-  if (API==='https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec') {
+  if (API==='https://script.google.com/macros/s/AKfycbwN2YOLLu39LxuPg76Jf95KFJYrM3Rbl23xfK3RGjZ2iT7xiocha6mOMDWWgB2u9mC3hA/exec') {
     var id='R'+Date.now().toString().slice(-6);
     allRiders.push({id:id,name:name,phone:phone,role:'rider'});
     toast('✅ Rider added! ID: '+id+' (Demo)');
