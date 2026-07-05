@@ -168,7 +168,7 @@ button{width:100%;padding:14px;background:#1a56db;color:#fff;border:none;border-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
-var API = 'https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec';
+var API = 'https://script.google.com/macros/s/AKfycbwN2YOLLu39LxuPg76Jf95KFJYrM3Rbl23xfK3RGjZ2iT7xiocha6mOMDWWgB2u9mC3hA/exec';
 
 var USERS = {
   'R001': {id:'R001', name:'Rider Ahmed', pin:'1111', role:'rider'},
@@ -212,7 +212,7 @@ function signin() {
   }
 
   // API check
-  if (API !== 'https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec') {
+  if (API !== 'https://script.google.com/macros/s/AKfycbwN2YOLLu39LxuPg76Jf95KFJYrM3Rbl23xfK3RGjZ2iT7xiocha6mOMDWWgB2u9mC3hA/exec') {
     fetch(API + '?action=login', {
       method:'POST',
       body: JSON.stringify({action:'login', riderId:id, pin:pin}),
@@ -265,21 +265,14 @@ function checkSession() {
 }
 
 function loadData() {
-  if (API !== 'https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec') {
-    fetch(API + '?action=getShipments', {
-      method:'POST',
-      body: JSON.stringify({action:'getShipments', riderId:me.id}),
-      headers:{'Content-Type':'application/json'}
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(res){
-      if (res && res.shipments) parseRaw(res.shipments);
-      else demo();
-    })
-    .catch(function(){ demo(); });
-    return;
-  }
-  demo();
+  var qs = 'action=getShipments&riderId=' + encodeURIComponent(me.id);
+  fetch(API + '?' + qs, {method:'GET', redirect:'follow'})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res && res.shipments && res.shipments.length > 0) parseRaw(res.shipments);
+    else demo();
+  })
+  .catch(function(){ demo(); });
 }
 
 function demo() {
@@ -513,8 +506,8 @@ function doWA(p,con,name,area,payment,balance) {
 }
 
 function sync(x) {
-  if(API==='https://script.google.com/macros/s/AKfycbxhr1a59dNzRpOtlxA5qiZCyakcKUIiU5mbz_jA2nK7cSZjJUoC8OOaBTpHLH0DaaJKPw/exec')return;
-  fetch(API+'?action=updateStatus',{method:'POST',body:JSON.stringify({action:'updateStatus',conNo:x.con,status:x.status,returnReason:x.returnReason||'',holdReason:x.holdReason||''}),headers:{'Content-Type':'application/json'}}).catch(function(){});
+  var qs = 'action=updateStatus&conNo='+encodeURIComponent(x.con)+'&status='+encodeURIComponent(x.status)+'&returnReason='+encodeURIComponent(x.returnReason||'')+'&holdReason='+encodeURIComponent(x.holdReason||'');
+  fetch(API+'?'+qs, {method:'GET',redirect:'follow'}).catch(function(){});
 }
 
 function makePDF() {
